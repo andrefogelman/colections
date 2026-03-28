@@ -96,6 +96,7 @@ export function HomePage() {
             onClear={clearSearch}
             searching={searching}
             searchMode={searchMode}
+            resultCount={searchMode === 'text' ? textResults.length : undefined}
           />
         </div>
       </header>
@@ -112,6 +113,16 @@ export function HomePage() {
           />
         )}
 
+        {searchMode === 'text' && !searching && textResults.length > 0 && (
+          <div className="mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
+              {textResults.map((item) => (
+                <ItemCard key={item.id} item={item} collectionId={item.collection_id} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {searchMode === 'tag' && !searching && (
           <div className="mb-6">
             {tagResults.length === 0 ? (
@@ -119,7 +130,7 @@ export function HomePage() {
                 Nenhum item encontrado com essas tags.
               </p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                 {tagResults.map((item) => (
                   <ItemCard key={item.id} item={item} collectionId={item.collection_id} />
                 ))}

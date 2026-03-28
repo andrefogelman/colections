@@ -65,15 +65,19 @@ export function useSearch() {
       const { embedding, description } = await searchService.generateEmbeddingFromFile(file)
       setImageDescription(description)
 
-      const [similar, textMatches] = await Promise.all([
-        searchService.searchBySimilarity(embedding, collectionId, 20),
-        description
-          ? searchService.searchByText(description.substring(0, 200), collectionId).catch(() => [] as Item[])
-          : Promise.resolve([] as Item[]),
-      ])
-
+      // Primary: visual similarity search
+      const similar = await searchService.searchBySimilarity(embedding, collectionId, 20)
       setSimilarResults(similar)
-      setTextResults(textMatches)
+
+      // Only do text fallback if no high-confidence visual match (>= 95%)
+      const hasStrongMatch = similar.some((r) => (1 - r.distance) >= 0.95)
+      if (!hasStrongMatch && description) {
+        const textMatches = await searchService.searchByText(
+          description.substring(0, 200),
+          collectionId
+        ).catch(() => [] as Item[])
+        setTextResults(textMatches)
+      }
     } finally {
       setSearching(false)
     }

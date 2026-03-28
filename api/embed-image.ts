@@ -10,49 +10,44 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary)
 }
 
-const VISUAL_FINGERPRINT_PROMPT = `You are a machine vision system that produces structured visual fingerprints for image similarity matching. Your output will be converted to a vector embedding for comparing images.
+const VISUAL_FINGERPRINT_PROMPT = `You are a deterministic visual fingerprint system. Given an image, output a FIXED structured description that will ALWAYS be identical for the same image.
 
-CRITICAL RULES:
-- Output ONLY the structured fingerprint, no prose, no markdown
-- Every tiny visual detail matters — two similar objects MUST produce DIFFERENT fingerprints
-- Focus on what the CAMERA SEES, not what you know about the object
-- Describe visual patterns, not concepts
+RULES:
+- Be EXTREMELY consistent. The same image must ALWAYS produce the EXACT same output.
+- Use ONLY objective visual facts. Never interpret or speculate.
+- Use fixed vocabulary: pick ONE word for each attribute, never synonyms.
+- Order elements top-to-bottom, left-to-right.
+- No articles, no filler words, no sentences. Only tags and values.
 
-OUTPUT FORMAT (use exactly these tags, one per line):
+FORMAT (one per line, exact tags):
 
-OBJECT_TYPE: [exact specific type, e.g. "coin 1-real brazil 2019" not "moeda"]
-SHAPE: [outline shape, symmetry, proportions]
-DOMINANT_COLORS: [list exact colors with coverage %, e.g. "silver-metallic:60% gold-rim:25% dark-patina:15%"]
-COLOR_DISTRIBUTION: [where each color appears: center, border, top, bottom, left, right]
-SURFACE_TEXTURE: [glossy/matte/brushed/rough/smooth/engraved/embossed/flat]
-VISIBLE_TEXT: [EVERY piece of text/number visible, exact spelling, position on object]
-VISIBLE_SYMBOLS: [logos, emblems, coats of arms, icons — describe each precisely]
-IMAGERY_FRONT: [what is depicted: people/animals/buildings/patterns, describe pose/position/detail]
-IMAGERY_BACK: [if visible]
-EDGE_DETAIL: [rim, border, frame — serrated/smooth/decorated/plain]
-SIZE_RATIO: [relative proportions of elements within the image]
-WEAR_PATTERN: [specific locations of wear, scratches, damage — or "mint/new"]
-UNIQUE_MARKS: [anything that distinguishes THIS exact item: errors, variants, stamps, serial numbers, stickers, handwriting]
-BACKGROUND: [what's behind/around the object in the photo]
-LIGHTING: [how light hits the object, reflections, shadows]
-ORIENTATION: [how the object is positioned in frame: centered, angled, rotated degrees]
-FINE_DETAILS: [smallest visible details: dot patterns, microtext, engravings, brush strokes, fiber patterns, grain]
-MATERIAL_CLUES: [visual indicators of material: metallic reflection, wood grain, fabric weave, plastic sheen, ceramic glaze]
-PATTERN_GEOMETRY: [repeating patterns, symmetry axes, geometric shapes within the design]
-COMPARISON_KEYS: [5-10 specific visual features that would distinguish this from a very similar item]`
+TYPE: [single word category: figurine/coin/card/stamp/toy/badge/bottle/plate/other]
+SUBTYPE: [specific type, e.g. "rubber-duck" "trading-card" "silver-coin"]
+SHAPE: [circle/square/rectangle/irregular/humanoid/animal]
+COLORS: [list max 5 colors, most dominant first: yellow,orange,black,white,brown]
+MATERIAL: [plastic/metal/paper/ceramic/wood/fabric/glass/rubber]
+CHARACTERS: [what figures appear: duck,hat,cowboy,horse,mustache,indian]
+TEXT_VISIBLE: [exact text/numbers readable, verbatim]
+SYMBOLS: [logos/emblems/icons visible]
+TEXTURE: [glossy/matte/rough/smooth/embossed]
+CONDITION: [new/good/worn/damaged]
+DISTINCTIVE: [3-5 unique visual features as comma-separated keywords]`
 
-const DESCRIPTION_PROMPT = `Você é um catalogador especialista em objetos colecionáveis. Descreva o objeto em detalhes para um catálogo de coleção.
+const DESCRIPTION_PROMPT = `Descreva este objeto de coleção de forma breve e objetiva em português.
 
-Inclua:
-1. Tipo exato do objeto e subtipo
-2. Todos os textos, números, inscrições visíveis
-3. O que está retratado (figuras, retratos, cenas)
-4. Cores e materiais exatos
-5. Detalhes físicos e condição
-6. Marcas distintivas, variantes, ano
-7. Fabricante/origem se identificável
+FORMATO OBRIGATÓRIO:
+Linha 1: Uma frase curta descrevendo o objeto (máximo 15 palavras)
+Linha 2 em diante: Lista de características visuais marcantes, uma por linha com "- " no início
 
-Escreva em português (Brasil). Seja detalhado e preciso.`
+EXEMPLO:
+Patinho de borracha amarelo vestido de cowboy
+- pato amarelo
+- chapéu de cowboy marrom
+- colete marrom
+- bico laranja
+- base azul
+
+Seja objetivo e visual. Sem explicações, só o que se vê.`
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
@@ -110,13 +105,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Generate the visual fingerprint for this image.' },
+              { type: 'text', text: 'Output the visual fingerprint tags for this image. Be deterministic.' },
               imageContent,
             ],
           },
         ],
-        max_tokens: 1200,
-        temperature: 0.1, // Low temperature for consistent, precise output
+        max_tokens: 400,
+        temperature: 0,
+        seed: 42,
       }),
     })
 
@@ -136,12 +132,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               {
                 role: 'user',
                 content: [
-                  { type: 'text', text: 'Descreva este objeto com o máximo de detalhes visuais.' },
+                  { type: 'text', text: 'Descreva este objeto seguindo o formato obrigatório.' },
                   imageContent,
                 ],
               },
             ],
-            max_tokens: 800,
+            max_tokens: 300,
+            temperature: 0,
           }),
         })
       : null

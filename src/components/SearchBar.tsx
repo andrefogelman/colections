@@ -13,9 +13,10 @@ interface Props {
   onClear: () => void
   searching: boolean
   searchMode: 'text' | 'image' | 'tag' | null
+  resultCount?: number
 }
 
-export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, searching, searchMode }: Props) {
+export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, searching, searchMode, resultCount }: Props) {
   const [query, setQuery] = useState('')
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -23,13 +24,11 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
   const [tagFilter, setTagFilter] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const tagDropdownRef = useRef<HTMLDivElement>(null)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
 
   useEffect(() => {
     fetchTags().then(setAllTags)
   }, [])
 
-  // Close tag dropdown on outside click
   useEffect(() => {
     if (!tagDropdownOpen) return
     const handler = (e: MouseEvent) => {
@@ -41,19 +40,11 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
     return () => document.removeEventListener('mousedown', handler)
   }, [tagDropdownOpen])
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (!query.trim()) {
-      if (searchMode === 'text') onClear()
-      return
-    }
-    debounceRef.current = setTimeout(() => {
-      onTextSearch(query.trim())
-    }, 400)
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [query]) // eslint-disable-line react-hooks/exhaustive-deps
+  const handleSearch = () => {
+    if (!query.trim()) return
+    setSelectedTags([])
+    onTextSearch(query.trim())
+  }
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -94,10 +85,11 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              if (selectedTags.length > 0) {
-                setSelectedTags([])
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleSearch()
               }
             }}
             placeholder="Buscar..."
@@ -108,14 +100,25 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
               onClick={handleClear}
               className="absolute right-3 top-1/2 -translate-y-1/2"
             >
-              {searching ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              ) : (
-                <X className="h-4 w-4 text-muted-foreground" />
-              )}
+              <X className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
         </div>
+
+        {/* Text search button */}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleSearch}
+          disabled={!query.trim() || searching}
+          title="Buscar"
+        >
+          {searching && searchMode === 'text' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
+        </Button>
 
         {/* Tag filter button */}
         <div ref={tagDropdownRef} className="relative">
@@ -173,7 +176,11 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
           onClick={() => fileInputRef.current?.click()}
           title="Buscar por imagem"
         >
-          <Image className="h-4 w-4" />
+          {searching && searchMode === 'image' ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Image className="h-4 w-4" />
+          )}
         </Button>
         <input
           ref={fileInputRef}
@@ -196,6 +203,15 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
             </Badge>
           ))}
         </div>
+      )}
+
+      {/* Search feedback */}
+      {!searching && searchMode === 'text' && resultCount !== undefined && (
+        <p className="text-sm text-muted-foreground">
+          {resultCount === 0
+            ? 'Nenhum item encontrado.'
+            : `${resultCount} item${resultCount !== 1 ? 's' : ''} encontrado${resultCount !== 1 ? 's' : ''}.`}
+        </p>
       )}
     </div>
   )
