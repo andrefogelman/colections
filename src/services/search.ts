@@ -27,7 +27,13 @@ export async function searchBySimilarity(
   return data
 }
 
-async function callEmbedApi(body: Record<string, unknown>): Promise<{ embedding: number[]; description: string }> {
+interface EmbedResult {
+  embedding: number[]
+  description: string
+  fingerprint: string
+}
+
+async function callEmbedApi(body: Record<string, unknown>): Promise<EmbedResult> {
   const res = await fetch('/api/embed-image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -40,23 +46,30 @@ async function callEmbedApi(body: Record<string, unknown>): Promise<{ embedding:
   return res.json()
 }
 
-export async function generateEmbedding(imageUrl: string): Promise<{ embedding: number[]; description: string }> {
+function fileToBase64(file: File): Promise<string> {
+  return file.arrayBuffer().then((buffer) => {
+    const bytes = new Uint8Array(buffer)
+    let binary = ''
+    const chunkSize = 8192
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+    }
+    return btoa(binary)
+  })
+}
+
+// Full analysis: description + fingerprint + embedding (for item creation)
+export async function generateEmbedding(imageUrl: string): Promise<EmbedResult> {
   return callEmbedApi({ imageUrl })
 }
 
+// Embed-only: just fingerprint + embedding (for image search queries)
 export async function generateEmbeddingFromFile(file: File): Promise<number[]> {
-  const buffer = await file.arrayBuffer()
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  const chunkSize = 8192
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-  }
-  const imageBase64 = btoa(binary)
-
+  const imageBase64 = await fileToBase64(file)
   const { embedding } = await callEmbedApi({
     imageBase64,
     mediaType: file.type || 'image/jpeg',
+    mode: 'embed-only',
   })
   return embedding
 }
