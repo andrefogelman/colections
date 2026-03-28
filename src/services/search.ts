@@ -40,9 +40,8 @@ async function callEmbedApi(body: Record<string, unknown>): Promise<{ embedding:
   return res.json()
 }
 
-export async function generateEmbedding(imageUrl: string): Promise<number[]> {
-  const { embedding } = await callEmbedApi({ imageUrl })
-  return embedding
+export async function generateEmbedding(imageUrl: string): Promise<{ embedding: number[]; description: string }> {
+  return callEmbedApi({ imageUrl })
 }
 
 export async function generateEmbeddingFromFile(file: File): Promise<number[]> {

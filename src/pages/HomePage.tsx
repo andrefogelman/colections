@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CollectionCard } from '@/components/CollectionCard'
@@ -37,9 +38,16 @@ export function HomePage() {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">Coleções</h1>
-            <Button onClick={() => setFormOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Coleção
-            </Button>
+            <div className="flex gap-2">
+              <Link to="/tags">
+                <Button variant="ghost" size="icon" title="Gerenciar Tags">
+                  <Tags className="h-4 w-4" />
+                </Button>
+              </Link>
+              <Button onClick={() => setFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Coleção
+              </Button>
+            </div>
           </div>
           <SearchBar
             onTextSearch={(q) => searchByText(q)}

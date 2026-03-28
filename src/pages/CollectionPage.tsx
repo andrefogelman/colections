@@ -1,36 +1,21 @@
-import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus } from 'lucide-react'
+import { ArrowLeft, Plus, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import { ItemCard } from '@/components/ItemCard'
-import { ItemForm } from '@/components/ItemForm'
 import { SearchBar } from '@/components/SearchBar'
 import { SimilarResults } from '@/components/SimilarResults'
 import { useItems } from '@/hooks/useItems'
 import { useSearch } from '@/hooks/useSearch'
-import { setItemTags } from '@/services/items'
 
 export function CollectionPage() {
   const { collectionId } = useParams<{ collectionId: string }>()
   const navigate = useNavigate()
-  const { items, loading, create, refresh } = useItems(collectionId)
+  const { items, loading, create } = useItems(collectionId)
   const { similarResults, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
-  const [showNewItem, setShowNewItem] = useState(false)
 
-  const handleCreateItem = async (description: string, tags: string[]) => {
-    const item = await create(description)
-    if (tags.length > 0) {
-      await setItemTags(item.id, tags)
-    }
-    setShowNewItem(false)
-    refresh()
+  const handleNewItem = async () => {
+    const item = await create('')
     navigate(`/c/${collectionId}/i/${item.id}`)
   }
 
@@ -45,7 +30,12 @@ export function CollectionPage() {
               </Button>
             </Link>
             <h1 className="text-xl font-bold flex-1">Itens</h1>
-            <Button onClick={() => setShowNewItem(true)}>
+            <Link to="/tags">
+              <Button variant="ghost" size="icon" title="Gerenciar Tags">
+                <Tags className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button onClick={handleNewItem}>
               <Plus className="h-4 w-4 mr-2" /> Novo Item
             </Button>
           </div>
@@ -86,7 +76,7 @@ export function CollectionPage() {
             <p className="text-muted-foreground mb-4">
               Nenhum item nesta coleção.
             </p>
-            <Button onClick={() => setShowNewItem(true)}>
+            <Button onClick={handleNewItem}>
               <Plus className="h-4 w-4 mr-2" /> Adicionar Item
             </Button>
           </div>
@@ -98,17 +88,6 @@ export function CollectionPage() {
           </div>
         )}
       </main>
-
-      <Sheet open={showNewItem} onOpenChange={setShowNewItem}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Novo Item</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <ItemForm onSubmit={handleCreateItem} submitLabel="Criar Item" />
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   )
 }
