@@ -55,6 +55,9 @@ export function ItemPage() {
 
       setDescription(aiDescription)
 
+      // Save description to DB immediately
+      await updateItem(itemId!, aiDescription)
+
       // Store embedding on the photo
       await updatePhotoEmbedding(photo.id, embedding)
 
