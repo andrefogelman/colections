@@ -76,15 +76,16 @@ export function HomePage() {
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Coleções</h1>
-            <div className="flex gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold">Coleções</h1>
+            <div className="flex gap-1 sm:gap-2">
               <Link to="/tags">
                 <Button variant="ghost" size="icon" title="Gerenciar Tags">
                   <Tags className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button onClick={() => setFormOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" /> Nova Coleção
+              <Button onClick={() => setFormOpen(true)} size="sm" className="sm:h-9 sm:px-4">
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Nova Coleção</span>
               </Button>
             </div>
           </div>

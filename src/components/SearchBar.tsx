@@ -100,8 +100,8 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
                 setSelectedTags([])
               }
             }}
-            placeholder="Buscar por descrição..."
-            className="pl-9 pr-9"
+            placeholder="Buscar..."
+            className="pl-9 pr-9 text-sm sm:text-base"
           />
           {(query || searchMode) && (
             <button
@@ -129,7 +129,7 @@ export function SearchBar({ onTextSearch, onImageSearch, onTagSearch, onClear, s
           </Button>
 
           {tagDropdownOpen && (
-            <div className="absolute right-0 z-20 mt-1 w-56 rounded-md border bg-popover shadow-md">
+            <div className="absolute right-0 z-20 mt-1 w-[calc(100vw-2rem)] sm:w-56 max-w-[16rem] rounded-md border bg-popover shadow-md">
               <div className="p-2 border-b">
                 <Input
                   value={tagFilter}

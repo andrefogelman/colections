@@ -56,20 +56,21 @@ export function CollectionPage() {
     <div className="min-h-screen">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 mb-4">
             <Link to="/">
               <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <h1 className="text-xl font-bold flex-1">Itens</h1>
+            <h1 className="text-lg sm:text-xl font-bold flex-1 truncate">Itens</h1>
             <Link to="/tags">
               <Button variant="ghost" size="icon" title="Gerenciar Tags">
                 <Tags className="h-4 w-4" />
               </Button>
             </Link>
-            <Button onClick={handleNewItem}>
-              <Plus className="h-4 w-4 mr-2" /> Novo Item
+            <Button onClick={handleNewItem} size="sm" className="sm:h-9 sm:px-4">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Novo Item</span>
             </Button>
           </div>
           <SearchBar
