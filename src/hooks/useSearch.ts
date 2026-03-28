@@ -12,6 +12,8 @@ export function useSearch() {
   const [textResults, setTextResults] = useState<Item[]>([])
   const [similarResults, setSimilarResults] = useState<SimilarResult[]>([])
   const [imageDescription, setImageDescription] = useState('')
+  const [searchImagePreview, setSearchImagePreview] = useState<string | null>(null)
+  const [searchFile, setSearchFile] = useState<File | null>(null)
   const [searching, setSearching] = useState(false)
   const [searchMode, setSearchMode] = useState<'text' | 'image' | null>(null)
 
@@ -25,6 +27,8 @@ export function useSearch() {
     setSearchMode('text')
     setSimilarResults([])
     setImageDescription('')
+    setSearchImagePreview(null)
+    setSearchFile(null)
     try {
       const results = await searchService.searchByText(query, collectionId)
       setTextResults(results)
@@ -39,6 +43,8 @@ export function useSearch() {
     setTextResults([])
     setSimilarResults([])
     setImageDescription('')
+    setSearchImagePreview(URL.createObjectURL(file))
+    setSearchFile(file)
     try {
       // Step 1: Generate embedding + description from image
       const { embedding, description } = await searchService.generateEmbeddingFromFile(file)
@@ -63,6 +69,8 @@ export function useSearch() {
     setTextResults([])
     setSimilarResults([])
     setImageDescription('')
+    setSearchImagePreview(null)
+    setSearchFile(null)
     setSearchMode(null)
   }, [])
 
@@ -70,6 +78,8 @@ export function useSearch() {
     textResults,
     similarResults,
     imageDescription,
+    searchImagePreview,
+    searchFile,
     searching,
     searchMode,
     searchByText,

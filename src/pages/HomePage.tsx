@@ -1,21 +1,33 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { CollectionCard } from '@/components/CollectionCard'
 import { CollectionForm } from '@/components/CollectionForm'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
 import { useCollections } from '@/hooks/useCollections'
 import { useSearch } from '@/hooks/useSearch'
+import { createItem, updateItem } from '@/services/items'
+import { uploadPhoto, updatePhotoEmbedding } from '@/services/photos'
+import { generateEmbedding } from '@/services/search'
 import type { Collection } from '@/types'
 
 export function HomePage() {
+  const navigate = useNavigate()
   const { collections, loading, create, update, remove } = useCollections()
-  const { similarResults, textResults, imageDescription, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
+  const { similarResults, textResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
   const [formOpen, setFormOpen] = useState(false)
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
+  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false)
 
   const handleCreateOrUpdate = async (name: string, description: string) => {
     if (editingCollection) {
@@ -29,6 +41,32 @@ export function HomePage() {
   const handleDelete = async (collection: Collection) => {
     if (confirm(`Excluir a coleção "${collection.name}" e todos os seus itens?`)) {
       await remove(collection.id)
+    }
+  }
+
+  const handleAddToCollectionPick = () => {
+    setCollectionPickerOpen(true)
+  }
+
+  const handlePickCollection = async (collectionId: string) => {
+    if (!searchFile) return
+    setCollectionPickerOpen(false)
+    try {
+      const item = await createItem(collectionId, imageDescription || '')
+      if (imageDescription) {
+        await updateItem(item.id, imageDescription)
+      }
+      const photo = await uploadPhoto(item.id, searchFile, 0)
+      try {
+        const { embedding } = await generateEmbedding(photo.url)
+        await updatePhotoEmbedding(photo.id, embedding)
+      } catch {
+        // Non-critical
+      }
+      toast.success('Item inserido na coleção')
+      navigate(`/c/${collectionId}/i/${item.id}`)
+    } catch (err) {
+      toast.error('Erro ao inserir: ' + String(err))
     }
   }
 
@@ -66,6 +104,8 @@ export function HomePage() {
             similarResults={similarResults}
             textResults={textResults}
             imageDescription={imageDescription}
+            imagePreview={searchImagePreview}
+            onAddToCollection={handleAddToCollectionPick}
           />
         )}
 
@@ -110,6 +150,31 @@ export function HomePage() {
         onSubmit={handleCreateOrUpdate}
         collection={editingCollection}
       />
+
+      {/* Collection picker dialog */}
+      <Dialog open={collectionPickerOpen} onOpenChange={setCollectionPickerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Selecionar Coleção</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {collections.map((collection) => (
+              <button
+                key={collection.id}
+                className="w-full flex items-center gap-3 p-3 rounded-md border hover:bg-accent text-left"
+                onClick={() => handlePickCollection(collection.id)}
+              >
+                <span className="font-medium">{collection.name}</span>
+                {collection.description && (
+                  <span className="text-sm text-muted-foreground truncate">
+                    {collection.description}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

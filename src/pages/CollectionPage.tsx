@@ -2,21 +2,54 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Tags } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 import { ItemCard } from '@/components/ItemCard'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
 import { useItems } from '@/hooks/useItems'
 import { useSearch } from '@/hooks/useSearch'
+import { uploadPhoto } from '@/services/photos'
+import { updateItem } from '@/services/items'
+import { generateEmbedding } from '@/services/search'
+import { updatePhotoEmbedding } from '@/services/photos'
 
 export function CollectionPage() {
   const { collectionId } = useParams<{ collectionId: string }>()
   const navigate = useNavigate()
-  const { items, loading, create } = useItems(collectionId)
-  const { similarResults, textResults, imageDescription, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
+  const { items, loading, create, refresh } = useItems(collectionId)
+  const { similarResults, textResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
 
   const handleNewItem = async () => {
     const item = await create('')
     navigate(`/c/${collectionId}/i/${item.id}`)
+  }
+
+  const handleAddSearchImageToCollection = async () => {
+    if (!searchFile || !collectionId) return
+    try {
+      // Create item with AI description
+      const item = await create(imageDescription || '')
+      if (imageDescription) {
+        await updateItem(item.id, imageDescription)
+      }
+
+      // Upload the search image as the item's photo
+      const photo = await uploadPhoto(item.id, searchFile, 0)
+
+      // Generate and store embedding
+      try {
+        const { embedding } = await generateEmbedding(photo.url)
+        await updatePhotoEmbedding(photo.id, embedding)
+      } catch {
+        // Non-critical
+      }
+
+      refresh()
+      toast.success('Item inserido na coleção')
+      navigate(`/c/${collectionId}/i/${item.id}`)
+    } catch (err) {
+      toast.error('Erro ao inserir: ' + String(err))
+    }
   }
 
   return (
@@ -56,6 +89,8 @@ export function CollectionPage() {
             similarResults={similarResults}
             textResults={textResults}
             imageDescription={imageDescription}
+            imagePreview={searchImagePreview}
+            onAddToCollection={handleAddSearchImageToCollection}
           />
         )}
 
