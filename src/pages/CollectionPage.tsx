@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ItemCard } from '@/components/ItemCard'
 import { SearchBar } from '@/components/SearchBar'
-import { SimilarResults } from '@/components/SimilarResults'
+import { ImageSearchResults } from '@/components/ImageSearchResults'
 import { useItems } from '@/hooks/useItems'
 import { useSearch } from '@/hooks/useSearch'
 
@@ -12,7 +12,7 @@ export function CollectionPage() {
   const { collectionId } = useParams<{ collectionId: string }>()
   const navigate = useNavigate()
   const { items, loading, create } = useItems(collectionId)
-  const { similarResults, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
+  const { similarResults, textResults, imageDescription, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
 
   const handleNewItem = async () => {
     const item = await create('')
@@ -51,18 +51,12 @@ export function CollectionPage() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         {searchMode === 'image' && (
-          <div className="mb-6">
-            <h2 className="text-lg font-medium mb-3">Itens Similares</h2>
-            {searching ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-md" />
-                ))}
-              </div>
-            ) : (
-              <SimilarResults results={similarResults} />
-            )}
-          </div>
+          <ImageSearchResults
+            searching={searching}
+            similarResults={similarResults}
+            textResults={textResults}
+            imageDescription={imageDescription}
+          />
         )}
 
         {loading ? (

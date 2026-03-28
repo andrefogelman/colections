@@ -6,14 +6,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { CollectionCard } from '@/components/CollectionCard'
 import { CollectionForm } from '@/components/CollectionForm'
 import { SearchBar } from '@/components/SearchBar'
-import { SimilarResults } from '@/components/SimilarResults'
+import { ImageSearchResults } from '@/components/ImageSearchResults'
 import { useCollections } from '@/hooks/useCollections'
 import { useSearch } from '@/hooks/useSearch'
 import type { Collection } from '@/types'
 
 export function HomePage() {
   const { collections, loading, create, update, remove } = useCollections()
-  const { similarResults, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
+  const { similarResults, textResults, imageDescription, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
   const [formOpen, setFormOpen] = useState(false)
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
 
@@ -61,18 +61,12 @@ export function HomePage() {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         {searchMode === 'image' && (
-          <div className="mb-6">
-            <h2 className="text-lg font-medium mb-3">Itens Similares</h2>
-            {searching ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-md" />
-                ))}
-              </div>
-            ) : (
-              <SimilarResults results={similarResults} />
-            )}
-          </div>
+          <ImageSearchResults
+            searching={searching}
+            similarResults={similarResults}
+            textResults={textResults}
+            imageDescription={imageDescription}
+          />
         )}
 
         {loading ? (

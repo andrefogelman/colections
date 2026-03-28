@@ -27,7 +27,7 @@ export async function searchBySimilarity(
   return data
 }
 
-interface EmbedResult {
+export interface EmbedResult {
   embedding: number[]
   description: string
   fingerprint: string
@@ -63,13 +63,11 @@ export async function generateEmbedding(imageUrl: string): Promise<EmbedResult> 
   return callEmbedApi({ imageUrl })
 }
 
-// Embed-only: just fingerprint + embedding (for image search queries)
-export async function generateEmbeddingFromFile(file: File): Promise<number[]> {
+// Full analysis from file: description + fingerprint + embedding (for image search)
+export async function generateEmbeddingFromFile(file: File): Promise<EmbedResult> {
   const imageBase64 = await fileToBase64(file)
-  const { embedding } = await callEmbedApi({
+  return callEmbedApi({
     imageBase64,
     mediaType: file.type || 'image/jpeg',
-    mode: 'embed-only',
   })
-  return embedding
 }
