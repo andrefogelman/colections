@@ -73,17 +73,17 @@ export function TagsPage() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
           <Link to="/">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Gerenciar Tags</h1>
+          <h1 className="text-lg sm:text-xl font-bold">Gerenciar Tags</h1>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Create new tag */}
         <div className="flex gap-2">
           <Input
@@ -97,8 +97,9 @@ export function TagsPage() {
             }}
             placeholder="Nova tag..."
           />
-          <Button onClick={handleCreate} disabled={!newTagName.trim()}>
-            <Plus className="h-4 w-4 mr-2" /> Criar
+          <Button onClick={handleCreate} disabled={!newTagName.trim()} size="sm" className="sm:h-9 sm:px-4">
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Criar</span>
           </Button>
         </div>
 

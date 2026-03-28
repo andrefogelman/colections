@@ -55,8 +55,8 @@ export function CollectionPage() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <Link to="/">
               <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-4 w-4" />
@@ -84,7 +84,7 @@ export function CollectionPage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {searchMode === 'image' && (
           <ImageSearchResults
             searching={searching}

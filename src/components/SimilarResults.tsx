@@ -17,7 +17,7 @@ export function SimilarResults({ results }: Props) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
       {results.map((result) => {
         const similarity = Math.round((1 - result.distance) * 100)
         return (

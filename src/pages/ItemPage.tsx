@@ -124,13 +124,13 @@ export function ItemPage() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
           <Link to={`/c/${collectionId}`}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold flex-1 truncate">
+          <h1 className="text-base sm:text-xl font-bold flex-1 truncate">
             {description?.substring(0, 50) || 'Novo Item'}
           </h1>
           <Button variant="destructive" size="icon" onClick={handleDelete}>
@@ -139,10 +139,10 @@ export function ItemPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6">
         {/* Step 1: Photos */}
         <section>
-          <h2 className="text-lg font-medium mb-3">1. Fotos</h2>
+          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">1. Fotos</h2>
           <PhotoUploader
             itemId={item.id}
             photos={item.photos ?? []}
@@ -154,7 +154,7 @@ export function ItemPage() {
 
         {/* Step 2: AI Description */}
         <section>
-          <h2 className="text-lg font-medium mb-3">2. Descrição</h2>
+          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">2. Descrição</h2>
 
           <Button
             onClick={handleExtractDescription}
@@ -187,7 +187,7 @@ export function ItemPage() {
 
         {/* Step 3: Tags */}
         <section>
-          <h2 className="text-lg font-medium mb-3">3. Tags</h2>
+          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">3. Tags</h2>
           <TagSelector selected={tags} onChange={setTags} />
         </section>
 

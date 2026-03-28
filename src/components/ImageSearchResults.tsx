@@ -36,18 +36,18 @@ export function ImageSearchResults({
   }
 
   return (
-    <div className="space-y-6 mb-6">
+    <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-6">
       {/* Search image preview */}
       {imagePreview && (
-        <div className="flex flex-col sm:flex-row gap-4 items-start">
-          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-lg overflow-hidden border bg-muted shrink-0">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
+          <div className="w-24 h-24 sm:w-40 sm:h-40 rounded-lg overflow-hidden border bg-muted shrink-0">
             <img
               src={imagePreview}
               alt="Imagem pesquisada"
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-2 sm:space-y-3">
             {imageDescription && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">A IA identificou:</p>

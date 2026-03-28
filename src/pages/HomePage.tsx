@@ -74,8 +74,8 @@ export function HomePage() {
   return (
     <div className="min-h-screen">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h1 className="text-xl sm:text-2xl font-bold">Coleções</h1>
             <div className="flex gap-1 sm:gap-2">
               <Link to="/tags">
@@ -100,7 +100,7 @@ export function HomePage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {searchMode === 'image' && (
           <ImageSearchResults
             searching={searching}

@@ -71,7 +71,7 @@ export function PhotoUploader({ itemId, photos, onPhotosChange }: Props) {
   return (
     <div className="space-y-4">
       <div
-        className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-muted-foreground/50 transition-colors"
+        className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-4 sm:p-6 text-center cursor-pointer hover:border-muted-foreground/50 active:border-muted-foreground/50 transition-colors"
         onClick={() => fileInputRef.current?.click()}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
@@ -90,7 +90,7 @@ export function PhotoUploader({ itemId, photos, onPhotosChange }: Props) {
         />
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
         {photos.map((photo) => (
           <div key={photo.id} className="relative group aspect-square rounded-md overflow-hidden">
             <img

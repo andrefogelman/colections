@@ -53,7 +53,7 @@ export function CollectionCard({ collection, onEdit, onDelete }: Props) {
         </CardContent>
       </Link>
 
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
         <DropdownMenu>
           <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md bg-secondary h-8 w-8">
             <MoreVertical className="h-4 w-4" />
