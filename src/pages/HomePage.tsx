@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { CollectionCard } from '@/components/CollectionCard'
+import { ItemCard } from '@/components/ItemCard'
 import { CollectionForm } from '@/components/CollectionForm'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
@@ -24,7 +25,7 @@ import type { Collection } from '@/types'
 export function HomePage() {
   const navigate = useNavigate()
   const { collections, loading, create, update, remove } = useCollections()
-  const { similarResults, textResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
+  const { similarResults, textResults, tagResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByTag, searchByImage, clearSearch } = useSearch()
   const [formOpen, setFormOpen] = useState(false)
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false)
@@ -89,6 +90,7 @@ export function HomePage() {
           </div>
           <SearchBar
             onTextSearch={(q) => searchByText(q)}
+            onTagSearch={(tags) => searchByTag(tags)}
             onImageSearch={searchByImage}
             onClear={clearSearch}
             searching={searching}
@@ -107,6 +109,22 @@ export function HomePage() {
             imagePreview={searchImagePreview}
             onAddToCollection={handleAddToCollectionPick}
           />
+        )}
+
+        {searchMode === 'tag' && !searching && (
+          <div className="mb-6">
+            {tagResults.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Nenhum item encontrado com essas tags.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {tagResults.map((item) => (
+                  <ItemCard key={item.id} item={item} collectionId={item.collection_id} />
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {loading ? (

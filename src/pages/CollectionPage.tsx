@@ -17,7 +17,7 @@ export function CollectionPage() {
   const { collectionId } = useParams<{ collectionId: string }>()
   const navigate = useNavigate()
   const { items, loading, create, refresh } = useItems(collectionId)
-  const { similarResults, textResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByImage, clearSearch } = useSearch()
+  const { similarResults, textResults, tagResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByTag, searchByImage, clearSearch } = useSearch()
 
   const handleNewItem = async () => {
     const item = await create('')
@@ -74,6 +74,7 @@ export function CollectionPage() {
           </div>
           <SearchBar
             onTextSearch={(q) => searchByText(q, collectionId)}
+            onTagSearch={(tags) => searchByTag(tags, collectionId)}
             onImageSearch={(f) => searchByImage(f, collectionId)}
             onClear={clearSearch}
             searching={searching}
@@ -92,6 +93,22 @@ export function CollectionPage() {
             imagePreview={searchImagePreview}
             onAddToCollection={handleAddSearchImageToCollection}
           />
+        )}
+
+        {searchMode === 'tag' && !searching && (
+          <div className="mb-6">
+            {tagResults.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Nenhum item encontrado com essas tags.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {tagResults.map((item) => (
+                  <ItemCard key={item.id} item={item} collectionId={collectionId!} />
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {loading ? (

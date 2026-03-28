@@ -13,6 +13,43 @@ export async function searchByText(
   return data
 }
 
+export async function searchByTag(
+  tagNames: string[],
+  collectionId?: string
+): Promise<Item[]> {
+  let query = supabase
+    .from('items')
+    .select(`
+      *,
+      photos (*),
+      item_tags!inner (
+        tags!inner (*)
+      )
+    `)
+    .in('item_tags.tags.name', tagNames)
+
+  if (collectionId) {
+    query = query.eq('collection_id', collectionId)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
+  if (error) throw error
+
+  // Normalise and deduplicate
+  const seen = new Set<string>()
+  return (data ?? [])
+    .map((item) => ({
+      ...item,
+      tags: item.item_tags?.map((it: { tags: { id: string; name: string } }) => it.tags) ?? [],
+      item_tags: undefined,
+    }))
+    .filter((item) => {
+      if (seen.has(item.id)) return false
+      seen.add(item.id)
+      return true
+    })
+}
+
 export async function searchBySimilarity(
   embedding: number[],
   collectionId?: string,
