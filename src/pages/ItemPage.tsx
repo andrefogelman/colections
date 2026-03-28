@@ -3,13 +3,11 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2, Sparkles, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { PhotoUploader } from '@/components/PhotoUploader'
+import { TagSelector } from '@/components/TagSelector'
 import type { Item } from '@/types'
 import { fetchItem, deleteItem, setItemTags, updateItem } from '@/services/items'
 import { generateEmbedding } from '@/services/search'
@@ -24,7 +22,6 @@ export function ItemPage() {
   // Form state
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [extracting, setExtracting] = useState(false)
 
@@ -93,18 +90,6 @@ export function ItemPage() {
     } finally {
       setSaving(false)
     }
-  }
-
-  const addTag = () => {
-    const tag = tagInput.trim().toLowerCase()
-    if (tag && !tags.includes(tag)) {
-      setTags((prev) => [...prev, tag])
-    }
-    setTagInput('')
-  }
-
-  const removeTag = (tag: string) => {
-    setTags((prev) => prev.filter((t) => t !== tag))
   }
 
   const handleDelete = async () => {
@@ -203,34 +188,7 @@ export function ItemPage() {
         {/* Step 3: Tags */}
         <section>
           <h2 className="text-lg font-medium mb-3">3. Tags</h2>
-          <div className="flex gap-2">
-            <Input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addTag()
-                }
-              }}
-              placeholder="Adicionar tag..."
-            />
-            <Button type="button" variant="outline" onClick={addTag}>
-              +
-            </Button>
-          </div>
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
-              {tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="gap-1">
-                  {tag}
-                  <button onClick={() => removeTag(tag)}>
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
+          <TagSelector selected={tags} onChange={setTags} />
         </section>
 
         <Separator />
