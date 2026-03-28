@@ -55,23 +55,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         model: 'gpt-4o-mini',
         messages: [
           {
+            role: 'system',
+            content: `You are an expert cataloger for collectible objects. Your job is to produce extremely detailed, precise descriptions that can distinguish between very similar items.
+
+CRITICAL: Two objects of the same category (e.g. two coins, two figurines, two cards) must produce DIFFERENT descriptions based on their unique visual details. Generic descriptions are useless.
+
+Always describe in this exact order:
+1. CATEGORY: Exact type/subtype (e.g. "Brazilian 1 Real coin, 2019 edition" not just "coin")
+2. VISUAL IDENTITY: Every visible text, number, symbol, logo, inscription, serial number, edition mark
+3. IMAGERY: What is depicted — figures, portraits, animals, scenes, patterns, illustrations
+4. COLORS & MATERIALS: Exact colors (gold, silver, bronze, matte black), material (metal, plastic, cardboard, ceramic, porcelain)
+5. PHYSICAL DETAILS: Shape, size estimation, weight class, texture (glossy, matte, rough, smooth)
+6. CONDITION: Wear, scratches, patina, discoloration, damage
+7. DISTINGUISHING MARKS: Anything that makes THIS specific item different from similar items — mint marks, variants, errors, signatures, stamps, stickers, serial numbers
+8. ORIGIN: Brand, manufacturer, country, era/year if identifiable
+9. RARITY INDICATORS: Limited edition marks, numbered series, special packaging indicators
+
+Write in Portuguese (Brazil). Be exhaustive — a longer, more specific description is always better than a short generic one.`,
+          },
+          {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'Describe this object in detail for a collection catalog. Include: type of object, material, color, size estimation, condition, distinctive features, brand/maker if visible, era/period if identifiable. Be concise but thorough. Respond in both English and Portuguese.',
+                text: 'Descreva este objeto com o máximo de detalhes visuais possível. Foque em tudo que diferencia este item específico de outros similares.',
               },
               {
                 type: 'image_url',
                 image_url: {
                   url: `data:${mediaType};base64,${imageBase64}`,
-                  detail: 'low',
+                  detail: 'high',
                 },
               },
             ],
           },
         ],
-        max_tokens: 300,
+        max_tokens: 800,
       }),
     })
 
@@ -97,7 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         model: 'text-embedding-3-small',
         input: description,
-        dimensions: 512,
+        dimensions: 1024,
       }),
     })
 
