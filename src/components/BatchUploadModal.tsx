@@ -34,6 +34,53 @@ interface Props {
   onComplete?: () => void
 }
 
+function isImageFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true
+  // iOS HEIC files may have empty type
+  const ext = file.name.toLowerCase().split('.').pop()
+  return ['heic', 'heif', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff'].includes(ext ?? '')
+}
+
+// Convert any image to JPEG via Canvas (handles HEIC on Safari)
+function convertToJpeg(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    // If already JPEG/PNG/WebP/GIF, no conversion needed
+    if (['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      resolve(file)
+      return
+    }
+
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('Canvas not supported')); return }
+      ctx.drawImage(img, 0, 0)
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url)
+          if (!blob) { reject(new Error('Conversion failed')); return }
+          const baseName = file.name.replace(/\.[^.]+$/, '')
+          resolve(new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        0.9
+      )
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to load image for conversion'))
+    }
+
+    img.src = url
+  })
+}
+
 export function BatchUploadModal({ open, onClose, collections, preselectedCollectionId, onComplete }: Props) {
   const [files, setFiles] = useState<BatchFile[]>([])
   const [collectionId, setCollectionId] = useState(preselectedCollectionId ?? '')
@@ -62,7 +109,7 @@ export function BatchUploadModal({ open, onClose, collections, preselectedCollec
 
   const handleFiles = (newFiles: FileList | File[]) => {
     const batch: BatchFile[] = Array.from(newFiles)
-      .filter((f) => f.type.startsWith('image/'))
+      .filter(isImageFile)
       .map((file) => ({
         file,
         preview: URL.createObjectURL(file),
@@ -97,64 +144,66 @@ export function BatchUploadModal({ open, onClose, collections, preselectedCollec
     try {
       const tags = await fetchTags()
       existingTagNames = tags.map((t) => t.name)
-    } catch {
-      // Continue without existing tags
+    } catch (err) {
+      console.error('Failed to fetch tags:', err)
     }
 
     for (let i = 0; i < files.length; i++) {
       if (cancelledRef.current) break
       setCurrentIndex(i)
 
-      // Step 1: Upload
-      updateFileStatus(i, { status: 'uploading' })
-      let itemId: string
-      let photoId: string
       try {
+        // Convert HEIC/other formats to JPEG
+        updateFileStatus(i, { status: 'uploading' })
+        let fileToUpload: File
+        try {
+          fileToUpload = await convertToJpeg(files[i].file)
+        } catch {
+          // If conversion fails, try with original file
+          fileToUpload = files[i].file
+        }
+
+        // Step 1: Create item and upload photo
         const item = await createItem(collectionId, '')
-        itemId = item.id
-        const photo = await uploadPhoto(itemId, files[i].file, 0)
-        photoId = photo.id
-      } catch (err) {
-        updateFileStatus(i, { status: 'error', error: `Upload falhou: ${err}` })
-        continue
-      }
+        const photo = await uploadPhoto(item.id, fileToUpload, 0)
 
-      // Step 2: AI Classification
-      updateFileStatus(i, { status: 'classifying' })
-      let description = ''
-      let suggestedTags: string[] = []
-      try {
-        const result = await classifyImage(files[i].file, existingTagNames)
-        description = result.description
-        suggestedTags = result.tags ?? []
+        // Step 2: AI Classification
+        updateFileStatus(i, { status: 'classifying' })
+        let description = ''
+        let suggestedTags: string[] = []
+        try {
+          const result = await classifyImage(fileToUpload, existingTagNames)
+          description = result.description
+          suggestedTags = result.tags ?? []
+          await updateItem(item.id, description)
+          await updatePhotoEmbedding(photo.id, result.embedding)
+        } catch (err) {
+          console.error(`AI classification failed for ${files[i].file.name}:`, err)
+          // Item was created, just AI failed — mark as done with partial info
+          updateFileStatus(i, { status: 'done', description: '(IA indisponível)', tags: [] })
+          continue
+        }
 
-        // Update item description
-        await updateItem(itemId, description)
-
-        // Update photo embedding
-        await updatePhotoEmbedding(photoId, result.embedding)
-      } catch (err) {
-        updateFileStatus(i, { status: 'error', error: `IA falhou: ${err}` })
-        continue
-      }
-
-      // Step 3: Tags
-      updateFileStatus(i, { status: 'tagging' })
-      try {
-        if (suggestedTags.length > 0) {
-          await setItemTags(itemId, suggestedTags)
-          // Add new tags to existing list for next iterations
-          for (const tag of suggestedTags) {
-            if (!existingTagNames.includes(tag)) {
-              existingTagNames.push(tag)
+        // Step 3: Tags
+        updateFileStatus(i, { status: 'tagging' })
+        try {
+          if (suggestedTags.length > 0) {
+            await setItemTags(item.id, suggestedTags)
+            for (const tag of suggestedTags) {
+              if (!existingTagNames.includes(tag)) {
+                existingTagNames.push(tag)
+              }
             }
           }
+        } catch {
+          // Non-critical
         }
-      } catch {
-        // Non-critical: item was created, just tags failed
-      }
 
-      updateFileStatus(i, { status: 'done', description, tags: suggestedTags })
+        updateFileStatus(i, { status: 'done', description, tags: suggestedTags })
+      } catch (err) {
+        console.error(`Failed to process ${files[i].file.name}:`, err)
+        updateFileStatus(i, { status: 'error', error: String(err) })
+      }
     }
 
     setProcessing(false)
