@@ -35,7 +35,7 @@ export async function searchByTag(
   const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
 
-  // Normalise and deduplicate
+  // Normalise, deduplicate, and enforce AND logic (item must have ALL selected tags)
   const seen = new Set<string>()
   return (data ?? [])
     .map((item) => ({
@@ -46,7 +46,8 @@ export async function searchByTag(
     .filter((item) => {
       if (seen.has(item.id)) return false
       seen.add(item.id)
-      return true
+      const itemTagNames = (item.tags as { name: string }[]).map((t) => t.name)
+      return tagNames.every((tag) => itemTagNames.includes(tag))
     })
 }
 
