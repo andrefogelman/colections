@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Tags, Upload } from 'lucide-react'
+import { Plus, Tags, Upload, Users, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -16,6 +16,7 @@ import { CollectionForm } from '@/components/CollectionForm'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
 import { BatchUploadModal } from '@/components/BatchUploadModal'
+import { useAuth } from '@/hooks/useAuth'
 import { useCollections } from '@/hooks/useCollections'
 import { useSearch } from '@/hooks/useSearch'
 import { createItem, updateItem } from '@/services/items'
@@ -25,6 +26,7 @@ import type { Collection } from '@/types'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const { isAdmin, signOut } = useAuth()
   const { collections, loading, create, update, remove } = useCollections()
   const { similarResults, textResults, tagResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByTag, searchByImage, clearSearch } = useSearch()
   const [formOpen, setFormOpen] = useState(false)
@@ -80,18 +82,32 @@ export function HomePage() {
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <h1 className="text-xl sm:text-2xl font-bold">Coleções</h1>
             <div className="flex gap-1 sm:gap-2">
+              {isAdmin && (
+                <Link to="/admin/users">
+                  <Button variant="ghost" size="icon" title="Gerenciar Usuários">
+                    <Users className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/tags">
                 <Button variant="ghost" size="icon" title="Gerenciar Tags">
                   <Tags className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button variant="outline" onClick={() => setBatchOpen(true)} size="sm" className="sm:h-9 sm:px-4">
-                <Upload className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Upload em Lote</span>
-              </Button>
-              <Button onClick={() => setFormOpen(true)} size="sm" className="sm:h-9 sm:px-4">
-                <Plus className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Nova Coleção</span>
+              {isAdmin && (
+                <>
+                  <Button variant="outline" onClick={() => setBatchOpen(true)} size="sm" className="sm:h-9 sm:px-4">
+                    <Upload className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Upload em Lote</span>
+                  </Button>
+                  <Button onClick={() => setFormOpen(true)} size="sm" className="sm:h-9 sm:px-4">
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Nova Coleção</span>
+                  </Button>
+                </>
+              )}
+              <Button variant="ghost" size="icon" title="Sair" onClick={signOut}>
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -154,11 +170,13 @@ export function HomePage() {
         ) : collections.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-muted-foreground mb-4">
-              Nenhuma coleção ainda. Crie sua primeira!
+              {isAdmin ? 'Nenhuma coleção ainda. Crie sua primeira!' : 'Nenhuma coleção disponível.'}
             </p>
-            <Button onClick={() => setFormOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Nova Coleção
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => setFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Nova Coleção
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

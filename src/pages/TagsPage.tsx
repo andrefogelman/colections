@@ -7,9 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import type { Tag } from '@/types'
+import { useAuth } from '@/hooks/useAuth'
 import { fetchTags, createTag, updateTag, deleteTag } from '@/services/tags'
 
 export function TagsPage() {
+  const { isAdmin } = useAuth()
   const [tags, setTags] = useState<Tag[]>([])
   const [loading, setLoading] = useState(true)
   const [newTagName, setNewTagName] = useState('')
@@ -85,23 +87,25 @@ export function TagsPage() {
 
       <main className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* Create new tag */}
-        <div className="flex gap-2">
-          <Input
-            value={newTagName}
-            onChange={(e) => setNewTagName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                handleCreate()
-              }
-            }}
-            placeholder="Nova tag..."
-          />
-          <Button onClick={handleCreate} disabled={!newTagName.trim()} size="sm" className="sm:h-9 sm:px-4">
-            <Plus className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Criar</span>
-          </Button>
-        </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Input
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleCreate()
+                }
+              }}
+              placeholder="Nova tag..."
+            />
+            <Button onClick={handleCreate} disabled={!newTagName.trim()} size="sm" className="sm:h-9 sm:px-4">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Criar</span>
+            </Button>
+          </div>
+        )}
 
         {/* Tag list */}
         {loading ? (
@@ -154,23 +158,27 @@ export function TagsPage() {
                       {tag.name}
                     </Badge>
                     <span className="flex-1" />
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingId(tag.id)
-                        setEditingName(tag.name)
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleDelete(tag)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {isAdmin && (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingId(tag.id)
+                            setEditingName(tag.name)
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleDelete(tag)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    )}
                   </>
                 )}
               </div>

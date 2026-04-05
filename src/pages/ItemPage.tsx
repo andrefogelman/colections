@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { PhotoUploader } from '@/components/PhotoUploader'
 import { TagSelector } from '@/components/TagSelector'
 import type { Item } from '@/types'
+import { useAuth } from '@/hooks/useAuth'
 import { fetchItem, deleteItem, setItemTags, updateItem } from '@/services/items'
 import { generateEmbedding } from '@/services/search'
 import { updatePhotoEmbedding } from '@/services/photos'
@@ -16,6 +17,7 @@ import { updatePhotoEmbedding } from '@/services/photos'
 export function ItemPage() {
   const { collectionId, itemId } = useParams<{ collectionId: string; itemId: string }>()
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const [item, setItem] = useState<Item | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -133,70 +135,98 @@ export function ItemPage() {
           <h1 className="text-base sm:text-xl font-bold flex-1 truncate">
             {description?.substring(0, 50) || 'Novo Item'}
           </h1>
-          <Button variant="destructive" size="icon" onClick={handleDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {isAdmin && (
+            <Button variant="destructive" size="icon" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-5 sm:space-y-6">
         {/* Step 1: Photos */}
         <section>
-          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">1. Fotos</h2>
-          <PhotoUploader
-            itemId={item.id}
-            photos={item.photos ?? []}
-            onPhotosChange={loadItem}
-          />
+          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Fotos</h2>
+          {isAdmin ? (
+            <PhotoUploader
+              itemId={item.id}
+              photos={item.photos ?? []}
+              onPhotosChange={loadItem}
+            />
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {(item.photos ?? []).map((photo) => (
+                <img key={photo.id} src={photo.url} alt="" className="aspect-square object-cover rounded-md" />
+              ))}
+            </div>
+          )}
         </section>
 
         <Separator />
 
-        {/* Step 2: AI Description */}
+        {/* Description */}
         <section>
-          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">2. Descrição</h2>
+          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Descrição</h2>
 
-          <Button
-            onClick={handleExtractDescription}
-            disabled={!hasPhotos || extracting}
-            variant="outline"
-            className="w-full mb-3"
-          >
-            {extracting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Analisando imagem...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Extrair descrição por IA
-              </>
-            )}
-          </Button>
+          {isAdmin && (
+            <Button
+              onClick={handleExtractDescription}
+              disabled={!hasPhotos || extracting}
+              variant="outline"
+              className="w-full mb-3"
+            >
+              {extracting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Analisando imagem...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Extrair descrição por IA
+                </>
+              )}
+            </Button>
+          )}
 
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={hasPhotos ? 'Clique no botão acima para gerar ou escreva manualmente...' : 'Adicione fotos primeiro...'}
-            rows={5}
-          />
+          {isAdmin ? (
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={hasPhotos ? 'Clique no botão acima para gerar ou escreva manualmente...' : 'Adicione fotos primeiro...'}
+              rows={5}
+            />
+          ) : (
+            <p className="text-sm whitespace-pre-wrap">{description || 'Sem descrição.'}</p>
+          )}
         </section>
 
         <Separator />
 
-        {/* Step 3: Tags */}
+        {/* Tags */}
         <section>
-          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">3. Tags</h2>
-          <TagSelector selected={tags} onChange={setTags} />
+          <h2 className="text-base sm:text-lg font-medium mb-2 sm:mb-3">Tags</h2>
+          {isAdmin ? (
+            <TagSelector selected={tags} onChange={setTags} />
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {tags.length > 0 ? tags.map((t) => (
+                <span key={t} className="text-xs bg-muted px-2 py-1 rounded">{t}</span>
+              )) : (
+                <p className="text-sm text-muted-foreground">Sem tags.</p>
+              )}
+            </div>
+          )}
         </section>
 
-        <Separator />
-
-        {/* Save */}
-        <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
-          {saving ? 'Salvando...' : 'Salvar'}
-        </Button>
+        {isAdmin && (
+          <>
+            <Separator />
+            <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
+              {saving ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </>
+        )}
       </main>
     </div>
   )

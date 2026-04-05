@@ -8,6 +8,7 @@ import { ItemCard } from '@/components/ItemCard'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
 import { BatchUploadModal } from '@/components/BatchUploadModal'
+import { useAuth } from '@/hooks/useAuth'
 import { useCollections } from '@/hooks/useCollections'
 import { useItems } from '@/hooks/useItems'
 import { useSearch } from '@/hooks/useSearch'
@@ -19,6 +20,7 @@ import { updatePhotoEmbedding } from '@/services/photos'
 export function CollectionPage() {
   const { collectionId } = useParams<{ collectionId: string }>()
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const { collections } = useCollections()
   const { items, loading, create, refresh } = useItems(collectionId)
   const { similarResults, textResults, tagResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByTag, searchByImage, clearSearch } = useSearch()
@@ -73,14 +75,18 @@ export function CollectionPage() {
                 <Tags className="h-4 w-4" />
               </Button>
             </Link>
-            <Button variant="outline" onClick={() => setBatchOpen(true)} size="sm" className="sm:h-9 sm:px-4">
-              <Upload className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Importar Fotos</span>
-            </Button>
-            <Button onClick={handleNewItem} size="sm" className="sm:h-9 sm:px-4">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Novo Item</span>
-            </Button>
+            {isAdmin && (
+              <>
+                <Button variant="outline" onClick={() => setBatchOpen(true)} size="sm" className="sm:h-9 sm:px-4">
+                  <Upload className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Importar Fotos</span>
+                </Button>
+                <Button onClick={handleNewItem} size="sm" className="sm:h-9 sm:px-4">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Novo Item</span>
+                </Button>
+              </>
+            )}
           </div>
           <SearchBar
             onTextSearch={(q) => searchByText(q, collectionId)}
@@ -143,9 +149,11 @@ export function CollectionPage() {
             <p className="text-muted-foreground mb-4">
               Nenhum item nesta coleção.
             </p>
-            <Button onClick={handleNewItem}>
-              <Plus className="h-4 w-4 mr-2" /> Adicionar Item
-            </Button>
+            {isAdmin && (
+              <Button onClick={handleNewItem}>
+                <Plus className="h-4 w-4 mr-2" /> Adicionar Item
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
