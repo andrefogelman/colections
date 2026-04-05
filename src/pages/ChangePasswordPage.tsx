@@ -35,15 +35,17 @@ export function ChangePasswordPage() {
       // Clear the must_change_password flag
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({ must_change_password: false })
           .eq('id', user.id)
+        if (profileError) throw profileError
       }
 
       await refreshProfile()
       toast.success('Senha alterada com sucesso')
     } catch (err) {
+      console.error('Change password error:', err)
       setError(err instanceof Error ? err.message : 'Erro ao alterar senha')
     } finally {
       setLoading(false)
