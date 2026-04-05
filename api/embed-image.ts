@@ -49,6 +49,22 @@ Patinho de borracha amarelo vestido de cowboy
 
 Seja objetivo e visual. Sem explicações, só o que se vê.`
 
+const TAG_PROMPT = `You are a tagging system for collectible items. Given an image, suggest relevant tags for categorization.
+
+RULES:
+- Return ONLY a JSON array of lowercase tag strings
+- Suggest 2-6 tags per item
+- Tags should be in Portuguese (pt-BR)
+- Use short, descriptive words (1-3 words max per tag)
+- Focus on: material, type, color, theme, era/style, brand (if visible)
+- If existing tags are provided, prefer matching them over creating new ones
+- Only create new tags when no existing tag fits
+
+EXISTING_TAGS_PLACEHOLDER
+
+EXAMPLE OUTPUT:
+["borracha", "amarelo", "brinquedo", "cowboy", "vintage"]`
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -64,7 +80,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { imageUrl, imageBase64: providedBase64, mediaType: providedMediaType, mode } = req.body
+    const { imageUrl, imageBase64: providedBase64, mediaType: providedMediaType, mode, existingTags } = req.body
 
     let imageBase64: string
     let mediaType = providedMediaType || 'image/jpeg'
@@ -197,7 +213,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Failed to generate embedding', details: embedData })
     }
 
-    return res.status(200).json({ embedding, description, fingerprint })
+    // Generate tags if mode is 'classify'
+    let tags: string[] = []
+    if (mode === 'classify') {
+      const tagPrompt = TAG_PROMPT.replace(
+        'EXISTING_TAGS_PLACEHOLDER',
+        existingTags?.length
+          ? `EXISTING TAGS IN SYSTEM (prefer these):\n${(existingTags as string[]).join(', ')}`
+          : 'No existing tags provided — create new ones freely.'
+      )
+
+      const tagRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: tagPrompt },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Suggest tags for this collectible item.' },
+                imageContent,
+              ],
+            },
+          ],
+          max_tokens: 200,
+          temperature: 0,
+        }),
+      })
+
+      if (tagRes.ok) {
+        const tagData = await tagRes.json()
+        const tagContent = tagData.choices?.[0]?.message?.content ?? '[]'
+        try {
+          const match = tagContent.match(/\[[\s\S]*\]/)
+          tags = match ? JSON.parse(match[0]) : []
+        } catch {
+          tags = []
+        }
+      }
+    }
+
+    return res.status(200).json({ embedding, description, fingerprint, tags })
   } catch (err) {
     return res.status(500).json({ error: String(err) })
   }

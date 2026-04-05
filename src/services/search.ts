@@ -68,6 +68,7 @@ export interface EmbedResult {
   embedding: number[]
   description: string
   fingerprint: string
+  tags?: string[]
 }
 
 async function callEmbedApi(body: Record<string, unknown>): Promise<EmbedResult> {
@@ -106,5 +107,19 @@ export async function generateEmbeddingFromFile(file: File): Promise<EmbedResult
   return callEmbedApi({
     imageBase64,
     mediaType: file.type || 'image/jpeg',
+  })
+}
+
+// Classify image: description + fingerprint + embedding + suggested tags
+export async function classifyImage(
+  file: File,
+  existingTags: string[]
+): Promise<EmbedResult> {
+  const imageBase64 = await fileToBase64(file)
+  return callEmbedApi({
+    imageBase64,
+    mediaType: file.type || 'image/jpeg',
+    mode: 'classify',
+    existingTags,
   })
 }

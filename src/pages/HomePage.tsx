@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Tags } from 'lucide-react'
+import { Plus, Tags, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -15,6 +15,7 @@ import { ItemCard } from '@/components/ItemCard'
 import { CollectionForm } from '@/components/CollectionForm'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
+import { BatchUploadModal } from '@/components/BatchUploadModal'
 import { useCollections } from '@/hooks/useCollections'
 import { useSearch } from '@/hooks/useSearch'
 import { createItem, updateItem } from '@/services/items'
@@ -29,6 +30,7 @@ export function HomePage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null)
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false)
+  const [batchOpen, setBatchOpen] = useState(false)
 
   const handleCreateOrUpdate = async (name: string, description: string) => {
     if (editingCollection) {
@@ -83,6 +85,10 @@ export function HomePage() {
                   <Tags className="h-4 w-4" />
                 </Button>
               </Link>
+              <Button variant="outline" onClick={() => setBatchOpen(true)} size="sm" className="sm:h-9 sm:px-4">
+                <Upload className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Upload em Lote</span>
+              </Button>
               <Button onClick={() => setFormOpen(true)} size="sm" className="sm:h-9 sm:px-4">
                 <Plus className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Nova Coleção</span>
@@ -179,6 +185,12 @@ export function HomePage() {
         }}
         onSubmit={handleCreateOrUpdate}
         collection={editingCollection}
+      />
+
+      <BatchUploadModal
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        collections={collections}
       />
 
       {/* Collection picker dialog */}

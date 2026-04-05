@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Tags } from 'lucide-react'
+import { ArrowLeft, Plus, Tags, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { ItemCard } from '@/components/ItemCard'
 import { SearchBar } from '@/components/SearchBar'
 import { ImageSearchResults } from '@/components/ImageSearchResults'
+import { BatchUploadModal } from '@/components/BatchUploadModal'
+import { useCollections } from '@/hooks/useCollections'
 import { useItems } from '@/hooks/useItems'
 import { useSearch } from '@/hooks/useSearch'
 import { uploadPhoto } from '@/services/photos'
@@ -16,8 +19,10 @@ import { updatePhotoEmbedding } from '@/services/photos'
 export function CollectionPage() {
   const { collectionId } = useParams<{ collectionId: string }>()
   const navigate = useNavigate()
+  const { collections } = useCollections()
   const { items, loading, create, refresh } = useItems(collectionId)
   const { similarResults, textResults, tagResults, imageDescription, searchImagePreview, searchFile, searching, searchMode, searchByText, searchByTag, searchByImage, clearSearch } = useSearch()
+  const [batchOpen, setBatchOpen] = useState(false)
 
   const handleNewItem = async () => {
     const item = await create('')
@@ -68,6 +73,10 @@ export function CollectionPage() {
                 <Tags className="h-4 w-4" />
               </Button>
             </Link>
+            <Button variant="outline" onClick={() => setBatchOpen(true)} size="sm" className="sm:h-9 sm:px-4">
+              <Upload className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Importar Fotos</span>
+            </Button>
             <Button onClick={handleNewItem} size="sm" className="sm:h-9 sm:px-4">
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Novo Item</span>
@@ -146,6 +155,14 @@ export function CollectionPage() {
           </div>
         )}
       </main>
+
+      <BatchUploadModal
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        collections={collections}
+        preselectedCollectionId={collectionId}
+        onComplete={refresh}
+      />
     </div>
   )
 }
