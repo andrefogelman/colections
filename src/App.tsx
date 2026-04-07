@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/hooks/useAuth'
 import { LoginPage } from '@/pages/LoginPage'
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
 import { HomePage } from '@/pages/HomePage'
 import { CollectionPage } from '@/pages/CollectionPage'
 import { ItemPage } from '@/pages/ItemPage'
@@ -11,7 +10,7 @@ import { AdminUsersPage } from '@/pages/AdminUsersPage'
 import { Skeleton } from '@/components/ui/skeleton'
 
 function AppRoutes() {
-  const { user, profile, loading, isAdmin } = useAuth()
+  const { user, loading, isAdmin } = useAuth()
 
   if (loading) {
     return (
@@ -26,15 +25,6 @@ function AppRoutes() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    )
-  }
-
-  if (profile?.must_change_password) {
-    return (
-      <Routes>
-        <Route path="/change-password" element={<ChangePasswordPage />} />
-        <Route path="*" element={<Navigate to="/change-password" replace />} />
       </Routes>
     )
   }

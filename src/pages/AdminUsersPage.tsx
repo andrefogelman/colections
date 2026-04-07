@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Trash2, Loader2, Shield, Eye } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Loader2, Shield, Eye, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,6 +44,10 @@ export function AdminUsersPage() {
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newRole, setNewRole] = useState<'admin' | 'viewer'>('viewer')
+  const [resetOpen, setResetOpen] = useState(false)
+  const [resetUser, setResetUser] = useState<UserProfile | null>(null)
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetting, setResetting] = useState(false)
 
   const loadUsers = useCallback(async () => {
     try {
@@ -93,6 +97,33 @@ export function AdminUsersPage() {
       toast.error(err instanceof Error ? err.message : 'Erro ao criar usuário')
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetUser || !resetPassword.trim()) return
+
+    setResetting(true)
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin-users', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ userId: resetUser.id, password: resetPassword }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Erro ao resetar senha')
+      }
+      toast.success(`Senha de ${resetUser.name} alterada`)
+      setResetOpen(false)
+      setResetUser(null)
+      setResetPassword('')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao resetar senha')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -164,6 +195,9 @@ export function AdminUsersPage() {
                   </div>
                   <p className="text-sm text-muted-foreground truncate">{u.email}</p>
                 </div>
+                <Button size="icon" variant="ghost" title="Resetar senha" onClick={() => { setResetUser(u); setResetPassword(''); setResetOpen(true) }}>
+                  <KeyRound className="h-4 w-4" />
+                </Button>
                 {u.id !== user?.id && (
                   <Button size="icon" variant="ghost" onClick={() => handleDelete(u)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -234,6 +268,41 @@ export function AdminUsersPage() {
               </Button>
               <Button type="submit" disabled={creating || !newName.trim() || !newEmail.trim() || !newPassword.trim()}>
                 {creating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Criando...</> : 'Criar Usuário'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent>
+          <form onSubmit={handleResetPassword}>
+            <DialogHeader>
+              <DialogTitle>Resetar Senha</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-muted-foreground">
+                Definir nova senha para <strong>{resetUser?.name}</strong> ({resetUser?.email})
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="resetPassword">Nova Senha</Label>
+                <Input
+                  id="resetPassword"
+                  type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setResetOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={resetting || !resetPassword.trim()}>
+                {resetting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando...</> : 'Salvar'}
               </Button>
             </DialogFooter>
           </form>

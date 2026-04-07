@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name, role, must_change_password: true },
+      user_metadata: { name, role, must_change_password: false },
     })
 
     if (error) {
@@ -72,6 +72,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    if (error) {
+      return res.status(400).json({ error: error.message })
+    }
+
+    return res.status(200).json({ success: true })
+  }
+
+  // PATCH: Reset password
+  if (req.method === 'PATCH') {
+    const { userId, password } = req.body
+
+    if (!userId || !password) {
+      return res.status(400).json({ error: 'Missing userId or password' })
+    }
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password })
     if (error) {
       return res.status(400).json({ error: error.message })
     }
