@@ -49,12 +49,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const u = session?.user ?? null
-      setUser(u)
-      if (u) {
-        const p = await fetchProfile(u.id)
-        setProfile(p)
+      try {
+        const u = session?.user ?? null
+        setUser(u)
+        if (u) {
+          const p = await fetchProfile(u.id)
+          setProfile(p)
+        }
+      } catch (err) {
+        console.error('Auth init error:', err)
+      } finally {
+        setLoading(false)
       }
+    }).catch(() => {
       setLoading(false)
     })
 
@@ -64,8 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const u = session?.user ?? null
         setUser(u)
         if (u) {
-          const p = await fetchProfile(u.id)
-          setProfile(p)
+          try {
+            const p = await fetchProfile(u.id)
+            setProfile(p)
+          } catch {
+            // Profile fetch failed, user stays without profile
+          }
         } else {
           setProfile(null)
         }
