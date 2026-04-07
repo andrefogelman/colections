@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export function ChangePasswordPage() {
-  const { refreshProfile } = useAuth()
+  const { user, refreshProfile } = useAuth()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
@@ -29,17 +29,28 @@ export function ChangePasswordPage() {
 
     setLoading(true)
     try {
+      // Update password via Supabase Auth
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
 
-      // Clear the must_change_password flag
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
+      // Clear the must_change_password flag via server API
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ userId: user?.id }),
+      })
+
+      if (!res.ok) {
+        // Fallback: try direct update
         const { error: profileError } = await supabase
           .from('profiles')
           .update({ must_change_password: false })
-          .eq('id', user.id)
-        if (profileError) throw profileError
+          .eq('id', user!.id)
+        if (profileError) console.error('Profile update fallback failed:', profileError)
       }
 
       await refreshProfile()
